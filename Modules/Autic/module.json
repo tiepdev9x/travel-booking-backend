@@ -1,0 +1,13 @@
+{
+    "name": "Autic",
+    "alias": "autic",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\Autic\\Providers\\AuticServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "requires": []
+}

@@ -1,2 +1,6 @@
 {
+    "Autic": true,
+    "Country": true,
+    "City": true,
+    "Flight": true
 }
