@@ -45,7 +45,8 @@ class FlightController extends Controller
 
         return rtrim($cookieJarText, ';');
     }
-    protected function getSessionKey($cookie)
+
+    protected function getSessionKey($cookie, $dataRequest)
     {
         $response = Http::withHeaders([
             'accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
@@ -53,7 +54,6 @@ class FlightController extends Controller
             'cache-control' => 'no-cache',
             'pragma' => 'no-cache',
             'priority' => 'u=0, i',
-            'referer' => 'https://autic.vn/flight-search?TripType=RT&custom_fee=130.000&DepartureCode-0=HAN&DestinationCode-0=PQC&DepartureDate-0=30%2F07%2F2025&ReturnDate-0=24%2F08%2F2025&Adults=1&Childrens=1&Infants=0',
             'sec-ch-ua' => '"Google Chrome";v="137", "Chromium";v="137", "Not/A)Brand";v="24"',
             'sec-ch-ua-mobile' => '?0',
             'sec-ch-ua-platform' => '"Linux"',
@@ -68,22 +68,34 @@ class FlightController extends Controller
             ->get('https://autic.vn/flight-search', [
                 'TripType' => 'RT',
                 'custom_fee' => '130.000',
-                'DepartureCode-0' => 'HAN',
-                'DestinationCode-0' => 'PQC',
-                'DepartureDate-0' => '30/07/2025',
-                'ReturnDate-0' => '24/08/2025',
-                'Adults' => 1,
-                'Childrens' => 1,
-                'Infants' => 0,
+                'DepartureCode-0' => $dataRequest['startPoint'],
+                'DestinationCode-0' => $dataRequest['endPoint'],
+                'DepartureDate-0' => $dataRequest['departureDate'],
+                'ReturnDate-0' => $dataRequest['returnDate'],
+                'Adults' => $dataRequest['adult'],
+                'Childrens' => $dataRequest['children'],
+                'Infants' => $dataRequest['infant'],
             ]);
         $dom = HtmlDomParser::str_get_html($response->body());
-       $key = $dom->find('#session_key', 0);
+        $key = $dom->find('#session_key', 0);
         return $key->value;
     }
+
     public function getFlight(Request $request)
     {
-        $cookie =  $this->login();
-        $session_key = $this->getSessionKey($cookie);
+        $dataRequest = [
+            'startPoint' => $request->get('startPoint'),
+            'endPoint' => $request->get('endPoint'),
+            'departureDate' => $request->get('departureDate'),
+            'returnDate' => $request->get('returnDate'),
+            'adult' => $request->get('adult'),
+            'children' => $request->get('children'),
+            'infant' => $request->get('infant'),
+            'itineraryType' => $request->get('itineraryType'),
+        ];
+
+        $cookie = $this->login();
+        $session_key = $this->getSessionKey($cookie, $dataRequest);
         $response = Http::withHeaders([
             'accept' => '*/*',
             'accept-language' => 'en-US,en;q=0.9,vi;q=0.8',
@@ -92,7 +104,6 @@ class FlightController extends Controller
             'origin' => 'https://autic.vn',
             'pragma' => 'no-cache',
             'priority' => 'u=1, i',
-            'referer' => 'https://autic.vn/flight-search?TripType=RT&custom_fee=130.000&DepartureCode-0=HAN&DestinationCode-0=PQC&DepartureDate-0=30%2F07%2F2025&ReturnDate-0=24%2F08%2F2025&Adults=1&Childrens=1&Infants=0',
             'sec-ch-ua' => '"Google Chrome";v="137", "Chromium";v="137", "Not/A)Brand";v="24"',
             'sec-ch-ua-mobile' => '?0',
             'sec-ch-ua-platform' => '"Linux"',
@@ -108,14 +119,14 @@ class FlightController extends Controller
                 'cmd' => 'get_domestic_flights_meta',
                 'session_key' => $session_key,
                 'data' => json_encode([
-                    "StartPoint" => "HAN",
-                    "EndPoint" => "PQC",
-                    "DepartureDate" => "30/07/2025",
-                    "ReturnDate" => "24/08/2025",
+                    "StartPoint" => $dataRequest['startPoint'],
+                    "EndPoint" => $dataRequest['endPoint'],
+                    "DepartureDate" => $dataRequest['departureDate'],
+                    "ReturnDate" => $dataRequest['returnDate'],
                     "ItineraryType" => 2,
-                    "Adult" => "1",
-                    "Children" => "1",
-                    "Infant" => "0",
+                    "Adult" => $dataRequest['adult'],
+                    "Children" => $dataRequest['children'],
+                    "Infant" => $dataRequest['infant'],
                     "customFee" => "130000",
                 ]),
             ]);
@@ -136,7 +147,10 @@ class FlightController extends Controller
             $locationEnd = trim($endpoint->find('div', 1)->innertext);
             $flightSession = $jsonString->attr['data-flightsession'] ?? '';
             $areOptionSession = $jsonString->attr['data-fareoptionsession'] ?? '';
-            $price = $this->getPrice($flightSession, $areOptionSession, $session_key, $cookie);
+            $price = $jsonString->find('div.price',0)->find('span.tax-fee', 0)->find('span.active', 0);
+            $currency = trim($price->find('strong', 0)->innertext);
+            $priceText = trim(strip_tags($price->innertext));
+
             $flights[] = [
                 'flightNumber' => $fightNumber,
                 'timeStart' => $timeStart,
@@ -144,7 +158,10 @@ class FlightController extends Controller
                 'timeEnd' => $timeEnd,
                 'locationEnd' => $locationEnd,
                 'flightSession' => $flightSession,
-                'price' => $price,
+                'fareoptionsession' => $areOptionSession,
+                'sessionKey' => $session_key,
+                'price' => $priceText,
+                'currency' => $currency,
             ];
         }
         $returns = [];
@@ -161,7 +178,9 @@ class FlightController extends Controller
             $locationEnd = trim($endpoint->find('div', 1)->innertext);
             $flightSession = $jsonString->attr['data-flightsession'] ?? '';
             $areOptionSession = $jsonString->attr['data-fareoptionsession'] ?? '';
-            $price = $this->getPrice($flightSession, $areOptionSession, $session_key, $cookie, true);
+            $price = $jsonString->find('div.price',0)->find('span.tax-fee', 0)->find('span.active', 0);
+            $currency = trim($price->find('strong', 0)->innertext);
+            $priceText = trim(strip_tags($price->innertext));
             $returns[] = [
                 'flightNumber' => $fightNumber,
                 'timeStart' => $timeStart,
@@ -169,7 +188,10 @@ class FlightController extends Controller
                 'timeEnd' => $timeEnd,
                 'locationEnd' => $locationEnd,
                 'flightSession' => $flightSession,
-                'price' => $price,
+                'fareoptionsession' => $areOptionSession,
+                'sessionKey' => $session_key,
+                'price' => $priceText,
+                'currency' => $currency,
             ];
         }
         return response()->json(['data' => [
@@ -204,7 +226,7 @@ class FlightController extends Controller
                 'FlightSession' => $flightSession,
                 'FareOptionSession' => $areOptionSession,
                 'session_key' => $session_key,
-                'Itinerary' => $isReturn ? 'ReturnFlights':'DepartureFlights',
+                'Itinerary' => $isReturn ? 'ReturnFlights' : 'DepartureFlights',
                 'customFee' => '130000'
             ]);
         $decodedContent = html_entity_decode($this->removeBOM($response->body()));
