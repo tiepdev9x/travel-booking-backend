@@ -147,7 +147,7 @@ class FlightController extends Controller
             $locationEnd = trim($endpoint->find('div', 1)->innertext);
             $flightSession = $jsonString->attr['data-flightsession'] ?? '';
             $areOptionSession = $jsonString->attr['data-fareoptionsession'] ?? '';
-            $price = $jsonString->find('div.price',0)->find('span.tax-fee', 0)->find('span.active', 0);
+            $price = $jsonString->find('div.price', 0)->find('span.tax-fee', 0)->find('span.active', 0);
             $currency = trim($price->find('strong', 0)->innertext);
             $priceText = trim(strip_tags($price->innertext));
 
@@ -178,7 +178,7 @@ class FlightController extends Controller
             $locationEnd = trim($endpoint->find('div', 1)->innertext);
             $flightSession = $jsonString->attr['data-flightsession'] ?? '';
             $areOptionSession = $jsonString->attr['data-fareoptionsession'] ?? '';
-            $price = $jsonString->find('div.price',0)->find('span.tax-fee', 0)->find('span.active', 0);
+            $price = $jsonString->find('div.price', 0)->find('span.tax-fee', 0)->find('span.active', 0);
             $currency = trim($price->find('strong', 0)->innertext);
             $priceText = trim(strip_tags($price->innertext));
             $returns[] = [
@@ -200,8 +200,13 @@ class FlightController extends Controller
         ]]);
     }
 
-    public function getPrice($flightSession, $areOptionSession, $session_key, $cookie, $isReturn = false)
+    public function getPrice(Request $request)
     {
+        $flightSession = $request->get('flightSession');
+        $areOptionSession = $request->get('areOptionSession');
+        $sessionKey = $request->get('sessionKey');
+        $cookie = $request->get('cookie');
+        $isReturn = $request->get('isReturn');
         $response = Http::withHeaders([
             'accept' => '*/*',
             'accept-language' => 'en-US,en;q=0.9,vi;q=0.8',
