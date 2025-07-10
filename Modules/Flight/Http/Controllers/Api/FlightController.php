@@ -150,7 +150,7 @@ class FlightController extends Controller
             $price = $jsonString->find('div.price', 0)->find('span.tax-fee', 0)->find('span.active', 0);
             $currency = trim($price->find('strong', 0)->innertext);
             $priceText = trim(strip_tags($price->innertext));
-
+            $detail = $jsonString->find('div.detail', 0)->innertext;
             $flights[] = [
                 'flightNumber' => $fightNumber,
                 'timeStart' => $timeStart,
@@ -162,6 +162,7 @@ class FlightController extends Controller
                 'sessionKey' => $session_key,
                 'price' => $priceText,
                 'currency' => $currency,
+                'detail' => $detail
             ];
         }
         $returns = [];
@@ -181,6 +182,7 @@ class FlightController extends Controller
             $price = $jsonString->find('div.price', 0)->find('span.tax-fee', 0)->find('span.active', 0);
             $currency = trim($price->find('strong', 0)->innertext);
             $priceText = trim(strip_tags($price->innertext));
+            $detail = $jsonString->find('div.detail', 0)->innertext;
             $returns[] = [
                 'flightNumber' => $fightNumber,
                 'timeStart' => $timeStart,
@@ -192,6 +194,7 @@ class FlightController extends Controller
                 'sessionKey' => $session_key,
                 'price' => $priceText,
                 'currency' => $currency,
+                'detail' => $detail
             ];
         }
         return response()->json(['data' => [
@@ -200,11 +203,48 @@ class FlightController extends Controller
         ]]);
     }
 
+    public function getFightDetail(Request $request)
+    {
+        $itinerary = $request->get('itinerary', 'DepartureFlights');
+        $flightSession = $request->get('flightSession');
+        $fareOptionSession = $request->get('fareOptionSession');
+        $session_key = $request->get('session_key');
+        $response = Http::withHeaders([
+            'Accept' => '*/*',
+            'Accept-Language' => 'en-US,en;q=0.9,vi;q=0.8',
+            'Cache-Control' => 'no-cache',
+            'Content-Type' => 'application/x-www-form-urlencoded; charset=UTF-8',
+            'Cookie' => '_ga=GA1.1.106281307.1745937281; has_js=1; SSESS3a54e8894cd9d00a41c84d37f39b8f57=wxVlzGbKwux84Utq-NQP_VG54Axeo_hstoHcMHCQaS4; _ga_S96FSCS5BG=GS2.1.s1752055764$o20$g1$t1752055765$j59$l0$h0',
+            'Origin' => 'https://autic.vn',
+            'Pragma' => 'no-cache',
+            'Priority' => 'u=1, i',
+            'Sec-Ch-Ua' => '"Google Chrome";v="137", "Chromium";v="137", "Not/A)Brand";v="24"',
+            'Sec-Ch-Ua-Mobile' => '?0',
+            'Sec-Ch-Ua-Platform' => '"Linux"',
+            'Sec-Fetch-Dest' => 'empty',
+            'Sec-Fetch-Mode' => 'cors',
+            'Sec-Fetch-Site' => 'same-origin',
+            'User-Agent' => 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36',
+            'X-Requested-With' => 'XMLHttpRequest',
+        ])->asForm()->post('https://autic.vn/cassiopeia/ajax', [
+            'cmd' => 'getFlightDetail',
+            'FlightSession' => $flightSession,
+            'FareOptionSession' => $fareOptionSession,
+            'Itinerary' => $itinerary,
+            'session_key' => $session_key,
+        ]);
+
+        $decodedContent = html_entity_decode($this->removeBOM($response->body()));
+        // Extract data segments using regex
+        $responseData = json_decode($decodedContent, true);
+        $responseData['html'] = str_replace('autic.vn', 'localhost', $responseData['html']);
+        return response()->json($responseData);
+    }
     public function getPrice(Request $request)
     {
         $flightSession = $request->get('flightSession');
         $areOptionSession = $request->get('areOptionSession');
-        $sessionKey = $request->get('sessionKey');
+        $session_key = $request->get('sessionKey');
         $cookie = $request->get('cookie');
         $isReturn = $request->get('isReturn');
         $response = Http::withHeaders([
