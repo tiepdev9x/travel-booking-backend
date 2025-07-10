@@ -209,12 +209,13 @@ class FlightController extends Controller
         $flightSession = $request->get('flightSession');
         $fareOptionSession = $request->get('fareOptionSession');
         $session_key = $request->get('session_key');
+        $cookie = $this->login();
         $response = Http::withHeaders([
             'Accept' => '*/*',
             'Accept-Language' => 'en-US,en;q=0.9,vi;q=0.8',
             'Cache-Control' => 'no-cache',
             'Content-Type' => 'application/x-www-form-urlencoded; charset=UTF-8',
-            'Cookie' => '_ga=GA1.1.106281307.1745937281; has_js=1; SSESS3a54e8894cd9d00a41c84d37f39b8f57=wxVlzGbKwux84Utq-NQP_VG54Axeo_hstoHcMHCQaS4; _ga_S96FSCS5BG=GS2.1.s1752055764$o20$g1$t1752055765$j59$l0$h0',
+            'Cookie' => $cookie,
             'Origin' => 'https://autic.vn',
             'Pragma' => 'no-cache',
             'Priority' => 'u=1, i',
@@ -240,13 +241,14 @@ class FlightController extends Controller
         $responseData['html'] = str_replace('autic.vn', 'localhost', $responseData['html']);
         return response()->json($responseData);
     }
+
     public function getPrice(Request $request)
     {
         $flightSession = $request->get('flightSession');
-        $areOptionSession = $request->get('areOptionSession');
-        $session_key = $request->get('sessionKey');
-        $cookie = $request->get('cookie');
-        $isReturn = $request->get('isReturn');
+        $fareOptionSession = $request->get('fareOptionSession');
+        $session_key = $request->get('session_key');
+        $isReturn = (bool)$request->get('isReturn', false);
+        $cookie = $this->login();
         $response = Http::withHeaders([
             'accept' => '*/*',
             'accept-language' => 'en-US,en;q=0.9,vi;q=0.8',
@@ -269,7 +271,7 @@ class FlightController extends Controller
             ->post('https://autic.vn/cassiopeia/ajax', [
                 'cmd' => 'getFLightClass',
                 'FlightSession' => $flightSession,
-                'FareOptionSession' => $areOptionSession,
+                'FareOptionSession' => $fareOptionSession,
                 'session_key' => $session_key,
                 'Itinerary' => $isReturn ? 'ReturnFlights' : 'DepartureFlights',
                 'customFee' => '130000'
@@ -282,9 +284,11 @@ class FlightController extends Controller
         foreach ($dom->childNodes() as $node) {
             $class = $node->attr['data-class'] ?? null;
             $price = $node->attr['data-value'] ?? null;
+            $fareoptionsession = $node->attr['data-fareoptionsession'] ?? null;
             $prices[] = [
                 'class' => $class,
                 'price' => $price,
+                'fareoptionsession' => $fareoptionsession,
             ];
         }
         return $prices;
