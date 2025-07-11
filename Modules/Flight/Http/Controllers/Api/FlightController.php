@@ -12,7 +12,7 @@ class FlightController extends Controller
 {
     protected function login()
     {
-        if(!empty(Cache::get('cookie_value_login'))){
+        if (!empty(Cache::get('cookie_value_login'))) {
             return Cache::get('cookie_value_login');
         }
         $response = Http::withHeaders([
@@ -307,6 +307,7 @@ class FlightController extends Controller
         $session_key = $request->get('session_key');
         $flightSession = $request->get('flightSession');
         $fareOptionSession = $request->get('fareOptionSession');
+        $delete = $request->get('delete', false);
         $response = Http::withHeaders([
             'accept' => '*/*',
             'accept-language' => 'en-US,en;q=0.9,vi;q=0.8',
@@ -327,7 +328,7 @@ class FlightController extends Controller
         ])
             ->asForm()
             ->post('https://autic.vn/cassiopeia/ajax', [
-                'cmd' => 'booking_choose_flight',
+                'cmd' => $delete ? 'booking_un_choose_flight' : 'booking_choose_flight',
                 '_flight_type' => 2,
                 'FlightNumber' => $flightNumber,
                 'Airline' => $airline,
