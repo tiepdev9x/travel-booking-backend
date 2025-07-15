@@ -345,6 +345,41 @@ class FlightController extends Controller
         return response()->json($responseData);
     }
 
+    public function addBaggage(Request $request)
+    {
+        $cookie = $this->login();
+        $baggages = (bool)$request->get('baggages', []);
+        $response = Http::withHeaders([
+            'accept' => '*/*',
+            'accept-language' => 'en-US,en;q=0.9,vi;q=0.8',
+            'cache-control' => 'no-cache',
+            'content-type' => 'application/x-www-form-urlencoded; charset=UTF-8',
+            'origin' => 'https://autic.vn',
+            'pragma' => 'no-cache',
+            'priority' => 'u=1, i',
+            'sec-ch-ua' => '"Google Chrome";v="137", "Chromium";v="137", "Not/A)Brand";v="24"',
+            'sec-ch-ua-mobile' => '?0',
+            'sec-ch-ua-platform' => '"Linux"',
+            'sec-fetch-dest' => 'empty',
+            'sec-fetch-mode' => 'cors',
+            'sec-fetch-site' => 'same-origin',
+            'user-agent' => 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36',
+            'x-requested-with' => 'XMLHttpRequest',
+            'Cookie' => $cookie,
+        ])
+            ->asForm()
+            ->post('https://autic.vn/cassiopeia/ajax', [
+                'cmd' => 'add_baggage',
+                'baggages' => $baggages,
+                'customFee' => '130000'
+            ]);
+        $decodedContent = html_entity_decode($this->removeBOM($response->body()));
+        // Extract data segments using regex
+        $responseData = json_decode($decodedContent, true);
+
+        return response()->json($responseData);
+    }
+
     protected function removeBOM($text)
     {
         $bom = pack('H*', 'EFBBBF');
