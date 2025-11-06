@@ -70,15 +70,15 @@ class FlightController extends Controller
             'Cookie' => $cookie,
         ])
             ->get('https://autic.vn/flight-search', [
-                'TripType' => 'RT',
+                'TripType' => $dataRequest['TripType'] ??'RT',
                 'custom_fee' => '130.000',
-                'DepartureCode-0' => $dataRequest['startPoint'],
-                'DestinationCode-0' => $dataRequest['endPoint'],
-                'DepartureDate-0' => $dataRequest['departureDate'],
-                'ReturnDate-0' => $dataRequest['returnDate'],
-                'Adults' => $dataRequest['adult'],
-                'Childrens' => $dataRequest['children'],
-                'Infants' => $dataRequest['infant'],
+                'DepartureCode-0' => $dataRequest['startPoint'] ?? '',
+                'DestinationCode-0' => $dataRequest['endPoint'] ?? '',
+                'DepartureDate-0' => $dataRequest['departureDate'] ?? '',
+                'ReturnDate-0' => $dataRequest['returnDate'] ?? '',
+                'Adults' => $dataRequest['adult'] ?? '0',
+                'Childrens' => $dataRequest['children'] ?? '0',
+                'Infants' => $dataRequest['infant'] ?? '0',
             ]);
         $dom = HtmlDomParser::str_get_html($response->body());
         $key = $dom->find('#session_key', 0);
@@ -112,6 +112,7 @@ class FlightController extends Controller
             'children' => $request->get('children'),
             'infant' => $request->get('infant'),
             'itineraryType' => $request->get('itineraryType'),
+            'TripType' => $request->get('TripType'),
         ];
 
         $cookie = $this->login();
