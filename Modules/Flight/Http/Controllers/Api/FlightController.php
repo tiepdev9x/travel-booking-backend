@@ -70,7 +70,7 @@ class FlightController extends Controller
             'Cookie' => $cookie,
         ])
             ->get('https://autic.vn/flight-search', [
-                'TripType' => $dataRequest['TripType'] ??'RT',
+                'TripType' => $dataRequest['TripType'] ?? 'RT',
                 'custom_fee' => '130.000',
                 'DepartureCode-0' => $dataRequest['startPoint'] ?? '',
                 'DestinationCode-0' => $dataRequest['endPoint'] ?? '',
@@ -143,8 +143,8 @@ class FlightController extends Controller
                     "StartPoint" => $dataRequest['startPoint'],
                     "EndPoint" => $dataRequest['endPoint'],
                     "DepartureDate" => $dataRequest['departureDate'],
-                    "ReturnDate" => $dataRequest['returnDate'],
-                    "ItineraryType" => 2,
+                    "ReturnDate" => $dataRequest['TripType'] ? '' : $dataRequest['returnDate'],
+                    "ItineraryType" => $dataRequest['TripType'] === 'OW' ? 1 : 2,
                     "Adult" => $dataRequest['adult'],
                     "Children" => $dataRequest['children'],
                     "Infant" => $dataRequest['infant'],
@@ -551,11 +551,11 @@ class FlightController extends Controller
         foreach ($allRequest['adults_customer_name'] ?? [] as $key => $value) {
             $departureFlights = json_decode($allRequest['adults_departure_flights'][$key] ?? '{}', true);
             $returnFlights = json_decode($allRequest['adults_return_flights'][$key] ?? '{}', true);
-           $baggages = [];
-            if($departureFlights['value'] ?? 0 > 0){
+            $baggages = [];
+            if ($departureFlights['value'] ?? 0 > 0) {
                 $baggages['DepartureFlights'] = ['id' => $departureFlights['value']];
             }
-            if($returnFlights['value'] ?? 0 > 0){
+            if ($returnFlights['value'] ?? 0 > 0) {
                 $baggages['ReturnFlights'] = ['id' => $returnFlights['value']];
             }
             $adtDataTmp = [
@@ -569,10 +569,10 @@ class FlightController extends Controller
             $departureFlights = json_decode($allRequest['children_departure_flights'][$key] ?? '{}', true);
             $returnFlights = json_decode($allRequest['children_return_flights'][$key] ?? '{}', true);
             $baggages = [];
-            if($departureFlights['value'] ?? 0 > 0){
+            if ($departureFlights['value'] ?? 0 > 0) {
                 $baggages['DepartureFlights'] = ['id' => $departureFlights['value']];
             }
-            if($returnFlights['value'] ?? 0 > 0){
+            if ($returnFlights['value'] ?? 0 > 0) {
                 $baggages['ReturnFlights'] = ['id' => $returnFlights['value']];
             }
             $chdDataTmp = [
