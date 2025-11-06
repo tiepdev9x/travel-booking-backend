@@ -388,6 +388,7 @@ class FlightController extends Controller
         $airline = $request->get('airline');
         $session_key = $request->get('session_key');
         $flightSession = $request->get('flightSession');
+        $tripType = $request->get('tripType');
         $fareOptionSession = $request->get('fareOptionSession');
         $delete = $request->get('delete', false);
         $response = Http::withHeaders([
@@ -411,7 +412,7 @@ class FlightController extends Controller
             ->asForm()
             ->post('https://autic.vn/cassiopeia/ajax', [
                 'cmd' => $delete ? 'booking_un_choose_flight' : 'booking_choose_flight',
-                '_flight_type' => 2,
+                '_flight_type' => $tripType === 'OW' ? 1 : 2,
                 'FlightNumber' => $flightNumber,
                 'Airline' => $airline,
                 'Itinerary' => $isReturn ? 'ReturnFlights' : 'DepartureFlights',
