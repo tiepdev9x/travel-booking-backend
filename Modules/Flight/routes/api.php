@@ -30,4 +30,5 @@ Route::group(['namespace' => '\Modules\Flight\Http\Controllers\Api'], function (
     Route::get("$module_name/getFightDetail", ['as' => "$module_name.getFightDetail", 'uses' => "$controller_name@getFightDetail"]);
     Route::post("$module_name/bookingChooseFlight", ['as' => "$module_name.bookingChooseFlight", 'uses' => "$controller_name@bookingChooseFlight"]);
     Route::post("$module_name/addBaggage", ['as' => "$module_name.addBaggage", 'uses' => "$controller_name@addBaggage"]);
+    Route::post("$module_name/bookingConfirm", ['as' => "$module_name.bookingSubmit", 'uses' => "$controller_name@bookingSubmit"]);
 });
