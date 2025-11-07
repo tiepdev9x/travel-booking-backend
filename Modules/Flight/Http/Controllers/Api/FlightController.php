@@ -143,7 +143,7 @@ class FlightController extends Controller
                     "StartPoint" => $dataRequest['startPoint'],
                     "EndPoint" => $dataRequest['endPoint'],
                     "DepartureDate" => $dataRequest['departureDate'],
-                    "ReturnDate" => $dataRequest['TripType'] ? '' : $dataRequest['returnDate'],
+                    "ReturnDate" => $dataRequest['TripType'] === 'OW' ? '' : $dataRequest['returnDate'],
                     "ItineraryType" => $dataRequest['TripType'] === 'OW' ? 1 : 2,
                     "Adult" => $dataRequest['adult'],
                     "Children" => $dataRequest['children'],
